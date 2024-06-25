@@ -1,16 +1,20 @@
 const PORT = 8000;
-require('dotenv').config()
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const fileUpload = require('express-fileupload');
-const {AssemblyAI} = require('assemblyai');
-const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
-const nodemailer= require('nodemailer')
-const validator= require('validator');
-const colors = require('tailwindcss/colors');
+const fileUpload = require("express-fileupload");
+const { AssemblyAI } = require("assemblyai");
+const {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} = require("@google/generative-ai");
+const nodemailer = require("nodemailer");
+const validator = require("validator");
 // Dynamically import node-fetch
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 global.fetch = fetch;
 
 const app = express();
@@ -18,7 +22,6 @@ app.use(cors());
 app.use(fileUpload());
 app.use(express.json());
 dotenv.config();
-
 
 const MODEL_NAME = "gemini-1.0-pro";
 
@@ -29,30 +32,29 @@ const client = new AssemblyAI({
 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL,
     pass: process.env.PASS,
   },
 });
 
-
 // Endpoint to handle contact form submissions
 app.post("/contact", (req, res) => {
   const { email, message } = req.body;
 
-  console.log(validator.isEmail(email))
+  console.log(validator.isEmail(email));
 
   // Validate the email format
   if (!validator.isEmail(email)) {
-    console.log('invalid formatt!!')
+    console.log("invalid formatt!!");
     return res.status(400).send("Invalid email format.");
   }
 
   const mailOptions = {
     from: email,
     to: process.env.EMAIL,
-    subject: 'Contact Form Submission',
+    subject: "Contact Form Submission",
     text: `Message from: ${email}\n\n${message}`,
   };
 
@@ -61,7 +63,7 @@ app.post("/contact", (req, res) => {
       console.log(error);
       res.status(500).send("Failed to send message.");
     } else {
-      console.log('Email sent: ' + info.response);
+      console.log("Email sent: " + info.response);
       res.status(200).send("Message sent successfully!");
     }
   });
@@ -147,12 +149,12 @@ app.post("/motivate", async (req, res) => {
 });
 
 // Endpoint to handle speech recognition using AssemblyAI
-app.post('/api/recognize', async (req, res) => {
-  console.log('api/recognize endpoint called');
+app.post("/api/recognize", async (req, res) => {
+  console.log("api/recognize endpoint called");
 
   if (!req.files || !req.files.audio) {
-    console.log('no audio');
-    return res.status(400).send('No audio file uploaded.');
+    console.log("no audio");
+    return res.status(400).send("No audio file uploaded.");
   }
 
   try {
@@ -167,27 +169,28 @@ app.post('/api/recognize', async (req, res) => {
     console.log(response);
 
     // Check if transcription status is completed
-    if (response.status === 'completed') {
+    if (response.status === "completed") {
       const transcription = response.text;
 
-      if(transcription==''){
-        res.json({transcription:'letter not recognized'});
-      }
-      else{
-        console.log('Transcription:', transcription);
+      if (transcription == "") {
+        res.json({ transcription: "letter not recognized" });
+      } else {
+        console.log("Transcription:", transcription);
         res.json({ transcription });
       }
-      
     } else {
-      console.log('Transcription status:', response.status);
-      res.status(500).send('Transcription not completed. Please try again later.');
+      console.log("Transcription status:", response.status);
+      res
+        .status(500)
+        .send("Transcription not completed. Please try again later.");
     }
   } catch (err) {
-    console.error('Error during speech recognition:', err);
-    res.status(500).send('Error during speech recognition. Please try again later.');
+    console.error("Error during speech recognition:", err);
+    res
+      .status(500)
+      .send("Error during speech recognition. Please try again later.");
   }
 });
-
 
 // Start the server
 app.listen(PORT, () => {
